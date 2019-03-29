@@ -30,10 +30,14 @@ class ConnectFour {
 
 class GameNode {
 
-    constructor(state, parent=null) {
+    constructor(state, parent=null, move=null) {
         this.state = state;
         this.parent = parent;
         this.children = [];
+        this.move = move;
+        this.win = false;
+        this.sims = 0;
+        this.wins = 0;
     }
 
     getValidMoves() {
@@ -50,9 +54,39 @@ class GameNode {
         }
         return moves;
     }
+
+    isWin() {
+        for (let i = 0; i < this.state.length; i++) {
+            for (let j = 0; j < this.state[i].length; j++) {
+                if (this.state[i][j] === 0) {
+                    continue;
+                }
+                if (i + 3 < this.state.length && this.state[i][j] === this.state[i+1][j] && this.state[i][j] === this.state[i+2][j] && this.state[i][j] === this.state[i+3][j]) {
+                    this.win = true;
+                    return this.state[i][j];
+                } else if (j + 3 < this.state[i].length && this.state[i][j] === this.state[i][j+1] && this.state[i][j]=== this.state[i][j+2] && this.state[i][j]=== this.state[i][j+3]) {
+                    this.win = true;
+                    return this.state[i][j];
+                } else if (i - 3 >= 0 && this.state[i][j] === this.state[i-1][j] && this.state[i][j]=== this.state[i-2][j]&& this.state[i][j] === this.state[i-3][j]) {
+                    this.win = true;
+                    return this.state[i][j];
+                } else if (j - 3 < this.state[i].length && this.state[i][j] === this.state[i][j-1] && this.state[i][j]=== this.state[i][j-2]&& this.state[i][j] === this.state[i][j-3]) {
+                    this.win = true;
+                    return this.state[i][j];
+                } else if (i + 3 < this.state.length && j + 3 < this.state[i].length && this.state[i][j] === this.state[i+1][j+1] && this.state[i][j]=== this.state[i+2][j+2] && this.state[i][j]=== this.state[i+3][j+3]) {
+                    this.win = true;
+                    return this.state[i][j];
+                } else if (i + 3 < this.state.length && j - 3 >= 0 && this.state[i][j] === this.state[i+1][j-1] && this.state[i][j]=== this.state[i+2][j-2] && this.state[i][j]=== this.state[i+3][j-3]) {
+                    this.win = true;
+                    return this.state[i][j];
+                }
+            }
+        }
+        return 0;
+    }
     
     stateCopy() {
-        let newState = [];
+        const newState = [];
         for (let i = 0; i < this.state.length; i++) {
             newState[i] = [...this.state[i]];
         }
@@ -60,9 +94,9 @@ class GameNode {
     }
 
     generateChild(move, player) {
-        let newState = this.stateCopy();
+        const newState = this.stateCopy();
         newState[move.row][move.col] = player;
-        return new GameNode(newState, this); 
+        return new GameNode(newState, this, move); 
     }
 
     generateChildren(player) {
@@ -82,7 +116,7 @@ function aprint(node) {
         }
         console.log(line);
     }
-    console.log();
+    console.log("");
 }
 
 const board = [];
@@ -99,9 +133,40 @@ let player = 1;
 function expand(node) {
     node.generateChildren(player);
     let index = Math.floor(Math.random() * node.children.length);
-    if (node.children.length === 0)
+    
+    console.log(node.isWin());
+    if (node.isWin() !== 0 || node.children.length === 0) {
+        aprint(node);
         return;
-    aprint(node.children[index]);
+    }
     player === 1 ? player = 2 : player = 1;
     expand(node.children[index]);
+}
+
+function simulate(node, count) {
+    while (count > 0) {
+        while (node.isWin() === 0) {
+            node.sims++;
+            if (node.children.length === 0)
+                node.generateChildren(player);
+            
+            let rand = Math.floor(Math.random() * node.children.length);
+            node = node.children[rand];
+            player === 1 ? player = 2 : player = 1;
+        }
+        while (node.parent !== null) {
+            node.wins++;
+            node = node.parent;
+        }
+        count--;
+    }
+}
+
+function getMove(node) {
+    let best = node.children[0];
+    for (let i = 0; i < node.children.length; i++) {
+        if (node.children[i].wins/node.children[i].sims > best.wins/best.sims)
+            best = node.children[i];
+    }
+    return best;
 }

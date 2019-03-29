@@ -67,8 +67,8 @@ class GameNode {
 
     generateChildren(player) {
         const moves = this.getValidMoves();
-        for (let i = 0; i < moves.length; i++) {
-            this.children.push(this.generateChild(moves[i], player));
+        for (let move of moves) {
+            this.children.push(this.generateChild(move, player));
         }
     }
 
